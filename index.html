@@ -3,17 +3,40 @@
 <head>
   <title>Porta Secreta</title>
   <style>
-    body { font-family: sans-serif; background: #111; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-    .porta { width: 150px; height: 300px; background: brown; border: 5px solid #333; margin-bottom: 20px; }
-    input { font-size: 1.2rem; padding: 10px; }
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      text-align: center;
+      padding-top: 100px;
+    }
+
+    .porta {
+      width: 150px;
+      height: 300px;
+      background: brown;
+      margin: 0 auto 20px;
+      border: 5px solid #333;
+    }
+
+    input {
+      padding: 10px;
+      font-size: 1.2rem;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 1.5rem;
+    }
   </style>
 </head>
 <body>
   <div class="porta"></div>
-  <input id="senha" placeholder="Digite a senha..." />
+  <input id="senha" type="password" placeholder="Digite a senha..." />
   <p id="status"></p>
 
   <script type="module">
+    // 1. Configuração do Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
@@ -29,24 +52,29 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const senhaRef = ref(db, "senha");
+    const portaAbertaRef = ref(db, "porta_aberta");
 
+    const senhaCorreta = "1234"; // <- A senha correta
     const input = document.getElementById("senha");
     const status = document.getElementById("status");
 
-    input.addEventListener("input", () => {
-      set(senhaRef, input.value);
+    // 2. Quando alguém digita e acerta a senha, atualiza o estado global
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        if (input.value === senhaCorreta) {
+          set(portaAbertaRef, true);
+        } else {
+          alert("❌ Senha incorreta!");
+        }
+        input.value = "";
+      }
     });
 
-    onValue(senhaRef, (snapshot) => {
-      const valor = snapshot.val();
-      if (input !== document.activeElement) {
-        input.value = valor;
-      }
-      if (valor === "1234") {
+    // 3. Todos escutam se a porta foi aberta
+    onValue(portaAbertaRef, (snapshot) => {
+      const aberta = snapshot.val();
+      if (aberta === true) {
         status.textContent = "✅ Porta Aberta!";
-      } else {
-        status.textContent = "";
       }
     });
   </script>
